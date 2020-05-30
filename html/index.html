@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <button id="js">这里是js</button>
+  <button id="wasm">这里是wasm</button>
+  <button id="wasm2">这里是wasm2</button>
+  <script>
+    function fib(num) {
+      if (num === 0) return 1
+      if (num === 1) return 1
+      return fib(num - 1) + fib(num - 2)
+    }
+  </script>
+  <script>
+    var btn1 = document.querySelector("#js")
+    var btn2 = document.querySelector("#wasm")
+    var btn3 = document.querySelector("#wasm2")
+
+    fetch('./fib.wasm')
+      .then(res => res.arrayBuffer())
+      .then(bytes => WebAssembly.compile(bytes))
+      .then(mod => {
+        const instance = new WebAssembly.Instance(mod)
+        const a = instance.exports
+        btn3.addEventListener('click', () => {
+          var startTime = performance.now()
+          instance.exports.b(45)
+          console.log(performance.now() - startTime, 'ms')
+        })
+      })
+    var Module = {}
+    var script = document.createElement('script')
+    fetch('./fib.wasm')
+      .then(res => res.arrayBuffer())
+      .then(bytes => {
+        Module.wasmBinary = bytes
+        script.src = './fib.js'
+        document.body.appendChild(script)
+      })
+    script.onload = () => {
+      btn1.addEventListener('click', () => {
+        var startTime = performance.now()
+        fib(45)
+        console.log(performance.now() - startTime, 'ms')
+      })
+      btn2.addEventListener('click', () => {
+        var startTime = performance.now()
+        Module.asm.b(45)
+        console.log(performance.now() - startTime, 'ms')
+      })
+    }
+  </script>
+</body>
+</html>
